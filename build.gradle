@@ -1,0 +1,38 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter'                  // 기본 스타터
+    implementation 'org.springframework.boot:spring-boot-starter-web'              // 웹 (REST API)
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'         // JPA
+    implementation 'org.mariadb.jdbc:mariadb-java-client'                           // MariaDB 드라이버
+    implementation 'org.springframework.boot:spring-boot-starter-security'         // 보안 (필요시)
+
+    implementation 'org.projectlombok:lombok'                                      // Lombok
+    annotationProcessor 'org.projectlombok:lombok'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'         // 테스트
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'                    // 테스트 런처
+
+    implementation 'com.squareup.okhttp3:okhttp:4.10.0'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
