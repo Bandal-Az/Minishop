@@ -28,9 +28,11 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'         // 테스트
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'                    // 테스트 런처
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'                   // 테스트 런처
 
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
+
+    implementation 'org.springframework.boot:spring-boot-starter-mail'             // 이메일 인증 관련
 }
 
 tasks.named('test') {

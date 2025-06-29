@@ -18,6 +18,9 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
+    // 이메일 인증은 별도 EmailVerificationService에서 처리 (필요시 주입 가능)
+    // private final EmailVerificationService emailVerificationService;
+
     public List<MemberResponseDto> getAllMembers() {
         return memberRepository.findAll().stream()
                 .map(this::toResponseDto)
@@ -51,6 +54,10 @@ public class MemberService {
         member.setPassword(passwordEncoder.encode(dto.getPassword())); // 암호화 적용
 
         Member saved = memberRepository.save(member);
+
+        // 이메일 인증 시작 로직 호출 가능
+        // emailVerificationService.sendVerificationEmail(saved);
+
         return toResponseDto(saved);
     }
 
@@ -71,11 +78,8 @@ public class MemberService {
                     existing.setRealName(dto.getRealName());
                     existing.setPhoneNumber(dto.getPhoneNumber());
                     existing.setAddress(dto.getAddress());
-                    existing.setIsEmailVerified(dto.getIsEmailVerified());
-                    existing.setIsPhoneAuthVerified(dto.getIsPhoneAuthVerified());
-                    existing.setAuthProvider(dto.getAuthProvider());
-                    existing.setIsActive(dto.getIsActive());
 
+                    // 이메일 인증 여부는 이메일 인증 서비스에서 관리, 직접 변경하지 않음
                     if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
                         if (!dto.getPassword().equals(dto.getConfirmPassword())) {
                             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
@@ -123,9 +127,7 @@ public class MemberService {
                 .realName(member.getRealName())
                 .phoneNumber(member.getPhoneNumber())
                 .address(member.getAddress())
-                .isEmailVerified(member.getIsEmailVerified())
-                .isPhoneAuthVerified(member.getIsPhoneAuthVerified())
-                .authProvider(member.getAuthProvider())
+                .isEmailVerified(member.getIsEmailVerified()) // 이메일 인증 상태 포함
                 .isActive(member.getIsActive())
                 .createdAt(member.getCreatedAt())
                 .updatedAt(member.getUpdatedAt())
@@ -136,16 +138,25 @@ public class MemberService {
         return Member.builder()
                 .username(dto.getUsername())
                 .email(dto.getEmail())
-                .password(dto.getPassword())  // 암호화 처리 권장
+                .password(dto.getPassword())  // 암호화는 서비스에서 처리
                 .nickname(dto.getNickname())
                 .realName(dto.getRealName())
                 .phoneNumber(dto.getPhoneNumber())
                 .address(dto.getAddress())
-                .isEmailVerified(dto.getIsEmailVerified())
-                .isPhoneAuthVerified(dto.getIsPhoneAuthVerified())
-                .authProvider(dto.getAuthProvider())
+                .isEmailVerified(false) // 기본 false로 초기화
                 .isActive(dto.getIsActive())
                 .build();
     }
-}
 
+    public boolean login(String username, String rawPassword) {
+        Member member = memberRepository.findByUsername(username).orElse(null);
+        if (member == null) {
+            System.out.println("로그인 실패: 사용자 없음 -> " + username);
+            return false;
+        }
+        boolean matches = passwordEncoder.matches(rawPassword, member.getPassword());
+        System.out.println("로그인 시도: " + username + ", 비밀번호 일치 여부: " + matches);
+        return matches;
+    }
+
+}

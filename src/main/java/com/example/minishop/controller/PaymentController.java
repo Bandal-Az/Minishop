@@ -46,9 +46,11 @@ public class PaymentController {
 
     // 토스 결제 요청
     @PostMapping("/toss/request")
-    public ResponseEntity<String> requestTossPayment(@RequestParam Long orderId, @RequestParam BigDecimal amount) {
-        String paymentKey = tossPaymentService.requestPayment(orderId, amount);
-        return ResponseEntity.ok(paymentKey);
+    public ResponseEntity<String> requestTossPayment(
+            @RequestParam Long orderId,
+            @RequestParam BigDecimal amount) {
+        String redirectUrl = tossPaymentService.requestPayment(orderId, amount);
+        return ResponseEntity.ok(redirectUrl);
     }
 
     // 토스 결제 확인

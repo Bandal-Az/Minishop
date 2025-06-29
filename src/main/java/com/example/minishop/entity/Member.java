@@ -28,6 +28,9 @@ public class Member extends BaseEntity {  // BaseEntity 상속
     private String email;     // 이메일 (유니크)
 
     @Column(nullable = false)
+    private Boolean isEmailVerified = false;
+
+    @Column(nullable = false)
     private String password;  // 암호화된 비밀번호
 
     @Enumerated(EnumType.STRING)
@@ -42,19 +45,6 @@ public class Member extends BaseEntity {  // BaseEntity 상속
 
     @Column(length = 255)
     private String address;
-
-    @Column(nullable = false)
-    private Boolean isEmailVerified = false; // 이메일 인증 여부
-
-    // 간편인증 관련 필드
-    @Column(nullable = false)
-    private Boolean isPhoneAuthVerified = false;  // 간편인증 성공 여부
-
-    @Column(length = 255)
-    private String phoneAuthToken;  // 간편인증 토큰
-
-    @Column(length = 50)
-    private String authProvider;    // 인증 제공자 (예: PASS, TOSS)
 
     private Boolean isActive; // BaseEntity에 없다면 여기에 유지
 

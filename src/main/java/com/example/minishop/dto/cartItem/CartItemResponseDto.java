@@ -16,4 +16,5 @@ public class CartItemResponseDto {
     private int quantity;      // 수량
     private BigDecimal price;  // 단가
     private BigDecimal totalPrice; // 총 가격 (단가 * 수량)
+    private String productImageUrl; // 이미지
 }

@@ -1,6 +1,7 @@
 package com.example.minishop.dto.review;
 
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @Setter
@@ -12,4 +13,5 @@ public class ReviewRequestDto {
     private Long memberId;
     private int rating;
     private String comment;
+    private MultipartFile imageFile;
 }

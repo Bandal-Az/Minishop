@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,64 +45,83 @@ public class OrderService {
         Member member = memberRepository.findById(dto.getMemberId())
                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
+        // 주문 객체 생성
         Order order = Order.builder()
                 .member(member)
+                .isActive(true)
                 .orderDate(LocalDateTime.now())   // 서버에서 현재 시간 지정
                 .status(OrderStatus.ORDERED)      // 기본 상태 지정
                 .build();
 
+        // 총 가격 계산 초기화
         BigDecimal totalPrice = BigDecimal.ZERO;
 
+        // 주문 항목 추가
         for (OrderItemRequestDto itemDto : dto.getOrderItems()) {
             Product product = productRepository.findById(itemDto.getProductId())
                     .orElseThrow(() -> new RuntimeException("Product not found"));
 
+            // 가격을 BigDecimal로 계산 후 소수점 2자리 반올림 처리
+            BigDecimal itemTotalPrice = calculateItemTotalPrice(product, itemDto.getQuantity());
+
+            // 주문 항목 객체 생성
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
                     .product(product)
                     .quantity(itemDto.getQuantity())
-                    .price(product.getPrice())
+                    .price(product.getPrice())  // 가격은 실제 가격
                     .build();
 
-            order.addOrderItem(orderItem);
+            order.addOrderItem(orderItem);  // 주문에 항목 추가
 
-            totalPrice = totalPrice.add(orderItem.getTotalPrice());
+            // 총 가격 업데이트
+            totalPrice = totalPrice.add(itemTotalPrice);  // 각 항목의 가격을 합산
         }
 
-        order.setTotalPrice(totalPrice);
+        // 주문의 총 가격 설정
+        order.setTotalPrice(totalPrice.setScale(2, RoundingMode.HALF_UP));  // 총 가격 소수점 2자리 반올림
 
-        Order saved = orderRepository.save(order);
-        return toResponseDto(saved);
+        // 주문 저장
+        Order savedOrder = orderRepository.save(order);
+
+        // 응답 DTO 반환
+        return toResponseDto(savedOrder);
     }
 
     public OrderResponseDto updateOrder(Long id, OrderRequestDto dto) {
         return orderRepository.findById(id)
-                .map(existing -> {
-                    existing.getOrderItems().clear();  // 기존 주문 상품 모두 삭제
+                .map(existingOrder -> {
+                    existingOrder.getOrderItems().clear();  // 기존 주문 상품 모두 삭제
 
                     BigDecimal totalPrice = BigDecimal.ZERO;
 
+                    // 새 주문 항목 추가
                     for (OrderItemRequestDto itemDto : dto.getOrderItems()) {
                         Product product = productRepository.findById(itemDto.getProductId())
                                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
+                        // 가격 계산 및 반올림 처리
+                        BigDecimal itemTotalPrice = calculateItemTotalPrice(product, itemDto.getQuantity());
+
+                        // 주문 항목 생성
                         OrderItem orderItem = OrderItem.builder()
-                                .order(existing)
+                                .order(existingOrder)
                                 .product(product)
                                 .quantity(itemDto.getQuantity())
-                                .price(product.getPrice())
+                                .price(product.getPrice())  // 가격 설정
                                 .build();
 
-                        existing.addOrderItem(orderItem);
+                        existingOrder.addOrderItem(orderItem);
 
-                        totalPrice = totalPrice.add(orderItem.getTotalPrice());
+                        // 총 가격 갱신
+                        totalPrice = totalPrice.add(itemTotalPrice);
                     }
 
-                    existing.setTotalPrice(totalPrice);
+                    // 주문의 총 가격 업데이트
+                    existingOrder.setTotalPrice(totalPrice.setScale(2, RoundingMode.HALF_UP));  // 소수점 2자리 반올림
 
-                    // 상태나 날짜는 여기서 필요하면 업데이트, 예시로 그대로 두겠습니다.
-
-                    return toResponseDto(orderRepository.save(existing));
+                    // 업데이트된 주문 저장
+                    return toResponseDto(orderRepository.save(existingOrder));
                 })
                 .orElse(null);
     }
@@ -110,6 +130,16 @@ public class OrderService {
         orderRepository.deleteById(id);
     }
 
+    // 주문 항목의 총 가격을 계산하는 로직을 별도 메서드로 분리
+    private BigDecimal calculateItemTotalPrice(Product product, int quantity) {
+        BigDecimal price = product.getPrice();
+        if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Product price is invalid or not set.");
+        }
+        return price.multiply(new BigDecimal(quantity)).setScale(2, RoundingMode.HALF_UP);  // 가격 * 수량
+    }
+
+    // Order 객체를 DTO로 변환
     private OrderResponseDto toResponseDto(Order order) {
         List<OrderItemResponseDto> itemDtos = order.getOrderItems().stream()
                 .map(item -> OrderItemResponseDto.builder()
@@ -117,7 +147,7 @@ public class OrderService {
                         .productId(item.getProduct().getId())
                         .quantity(item.getQuantity())
                         .price(item.getPrice())
-                        .totalPrice(item.getTotalPrice())
+                        .totalPrice(item.getTotalPrice())  // 총 가격 포함
                         .build())
                 .collect(Collectors.toList());
 
@@ -125,7 +155,7 @@ public class OrderService {
                 .id(order.getId())
                 .memberId(order.getMember().getId())
                 .orderDate(order.getOrderDate())
-                .totalPrice(order.getTotalPrice())
+                .totalPrice(order.getTotalPrice())  // 총 가격 포함
                 .status(order.getStatus().name())
                 .orderItems(itemDtos)
                 .build();

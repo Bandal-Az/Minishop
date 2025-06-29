@@ -28,4 +28,6 @@ public class Wishlist extends BaseEntity {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    @Column(nullable = false)
+    private boolean isActive = true;
 }

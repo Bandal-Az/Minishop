@@ -16,9 +16,7 @@ public class MemberRequestDto {
     private String realName;
     private String phoneNumber;
     private String address;
-    private String phoneAuthToken;
-    private String authProvider;
     private Boolean isEmailVerified;
-    private Boolean isPhoneAuthVerified;
     private Boolean isActive;
+
 }

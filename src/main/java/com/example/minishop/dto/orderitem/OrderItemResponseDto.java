@@ -15,4 +15,6 @@ public class OrderItemResponseDto {
     private int quantity;
     private BigDecimal price;
     private BigDecimal totalPrice; // 계산된 총 가격
+    private String productName;
+    private String productImageUrl;
 }

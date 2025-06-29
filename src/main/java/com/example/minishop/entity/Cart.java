@@ -25,7 +25,8 @@ public class Cart {
     private Member member;
 
     // 장바구니에 담긴 항목들
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<CartItem> cartItems = new ArrayList<>();
 
     public void addCartItem(CartItem item) {

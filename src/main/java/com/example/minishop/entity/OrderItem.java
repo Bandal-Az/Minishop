@@ -30,7 +30,7 @@ public class OrderItem {
     private int quantity; // 수량
 
     @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal price;
+    private BigDecimal price; // 상품 가격 (변동 방지용, 주문 시 참고용)
 
     public BigDecimal getTotalPrice() {
         return price.multiply(BigDecimal.valueOf(quantity));

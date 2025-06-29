@@ -38,10 +38,15 @@ public class Order extends BaseEntity {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
-    public void addOrderItem(OrderItem item) {
-        this.orderItems.add(item);
-        item.setOrder(this);
+    public void addOrderItem(OrderItem orderItem) {
+        if (orderItems == null) {
+            orderItems = new ArrayList<>(); // null일 경우 초기화
+        }
+        orderItems.add(orderItem);
     }
+
+    @Column(nullable = false)
+    private boolean isActive = true;
 
     public enum OrderStatus {
         ORDERED,    // 주문완료

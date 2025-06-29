@@ -22,20 +22,23 @@ public class WishlistService {
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
 
-    public List<WishlistResponseDto> getAllWishlists() {
-        return wishlistRepository.findAll().stream()
+    // 로그인한 사용자의 위시리스트 목록 조회
+    public List<WishlistResponseDto> getAllWishlists(Long memberId) {
+        return wishlistRepository.findByMemberId(memberId).stream() // 로그인한 사용자의 위시리스트만 조회
                 .map(this::toResponseDto)
                 .collect(Collectors.toList());
     }
 
-    public WishlistResponseDto getWishlistById(Long id) {
-        return wishlistRepository.findById(id)
+    // 특정 ID로 위시리스트 조회
+    public WishlistResponseDto getWishlistById(Long id, Long memberId) {
+        return wishlistRepository.findByIdAndMemberId(id, memberId)
                 .map(this::toResponseDto)
                 .orElse(null);
     }
 
-    public WishlistResponseDto createWishlist(WishlistRequestDto dto) {
-        Member member = memberRepository.findById(dto.getMemberId())
+    // 위시리스트 항목 생성
+    public WishlistResponseDto createWishlist(WishlistRequestDto dto, Long memberId) {
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new RuntimeException("Member not found"));
         Product product = productRepository.findById(dto.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not found"));
@@ -49,30 +52,27 @@ public class WishlistService {
         return toResponseDto(saved);
     }
 
-    public WishlistResponseDto updateWishlist(Long id, WishlistRequestDto dto) {
-        return wishlistRepository.findById(id)
+    // 위시리스트 항목 수정
+    public WishlistResponseDto updateWishlist(Long id, WishlistRequestDto dto, Long memberId) {
+        return wishlistRepository.findByIdAndMemberId(id, memberId)
                 .map(existing -> {
-                    Member member = memberRepository.findById(dto.getMemberId())
-                            .orElseThrow(() -> new RuntimeException("Member not found"));
                     Product product = productRepository.findById(dto.getProductId())
                             .orElseThrow(() -> new RuntimeException("Product not found"));
 
-                    existing.setMember(member);
                     existing.setProduct(product);
                     return toResponseDto(wishlistRepository.save(existing));
                 })
                 .orElse(null);
     }
 
-    public void deleteWishlist(Long id) {
-        wishlistRepository.deleteById(id);
+    // 위시리스트 항목 삭제
+    public void deleteWishlist(Long id, Long memberId) {
+        wishlistRepository.findByIdAndMemberId(id, memberId)
+                .ifPresent(wishlistRepository::delete);
     }
 
+    // Wishlist -> WishlistResponseDto 변환
     private WishlistResponseDto toResponseDto(Wishlist wishlist) {
-        return WishlistResponseDto.builder()
-                .id(wishlist.getId())
-                .memberId(wishlist.getMember().getId())
-                .productId(wishlist.getProduct().getId())
-                .build();
+        return WishlistResponseDto.from(wishlist);  // 위에서 작성한 from 메서드 사용
     }
 }

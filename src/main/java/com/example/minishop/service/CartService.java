@@ -1,6 +1,5 @@
 package com.example.minishop.service;
 
-import com.example.minishop.dto.cart.CartRequestDto;
 import com.example.minishop.dto.cart.CartResponseDto;
 import com.example.minishop.dto.cartItem.CartItemResponseDto;
 import com.example.minishop.entity.Cart;
@@ -15,9 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +26,6 @@ public class CartService {
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
 
-    // 회원의 장바구니 조회 (없으면 새로 생성)
     @Transactional(readOnly = true)
     public CartResponseDto getCartByMemberId(Long memberId) {
         Cart cart = cartRepository.findByMemberId(memberId)
@@ -36,7 +33,6 @@ public class CartService {
         return toResponseDto(cart);
     }
 
-    // 장바구니 생성
     @Transactional
     public Cart createCartForMember(Long memberId) {
         Member member = memberRepository.findById(memberId)
@@ -47,7 +43,6 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
-    // 장바구니에 아이템 추가 또는 수량 업데이트
     @Transactional
     public CartResponseDto addOrUpdateCartItem(Long memberId, Long productId, int quantity) {
         Cart cart = cartRepository.findByMemberId(memberId)
@@ -55,8 +50,9 @@ public class CartService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        // 이미 담긴 아이템 확인
-        CartItem existingItem = cart.getCartItems().stream()
+        List<CartItem> cartItems = cart.getCartItems();
+
+        CartItem existingItem = cartItems.stream()
                 .filter(item -> item.getProduct().getId().equals(productId))
                 .findFirst()
                 .orElse(null);
@@ -78,13 +74,17 @@ public class CartService {
         return toResponseDto(cart);
     }
 
-    // 장바구니 아이템 수량 수정
     @Transactional
     public CartResponseDto updateCartItem(Long memberId, Long cartItemId, int quantity) {
         Cart cart = cartRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new RuntimeException("Cart not found"));
 
-        CartItem item = cart.getCartItems().stream()
+        List<CartItem> cartItems = cart.getCartItems();
+        if (cartItems == null) {
+            cartItems = Collections.emptyList();
+        }
+
+        CartItem item = cartItems.stream()
                 .filter(ci -> ci.getId().equals(cartItemId))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("CartItem not found"));
@@ -99,13 +99,17 @@ public class CartService {
         return toResponseDto(cart);
     }
 
-    // 장바구니 아이템 삭제
     @Transactional
     public CartResponseDto removeCartItem(Long memberId, Long cartItemId) {
         Cart cart = cartRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new RuntimeException("Cart not found"));
 
-        CartItem item = cart.getCartItems().stream()
+        List<CartItem> cartItems = cart.getCartItems();
+        if (cartItems == null) {
+            cartItems = Collections.emptyList();
+        }
+
+        CartItem item = cartItems.stream()
                 .filter(ci -> ci.getId().equals(cartItemId))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("CartItem not found"));
@@ -116,11 +120,11 @@ public class CartService {
         return toResponseDto(cart);
     }
 
-    // Cart -> CartResponseDto 변환
     private CartResponseDto toResponseDto(Cart cart) {
-        List<CartItemResponseDto> cartItems = cart.getCartItems().stream()
-                .map(this::toCartItemResponseDto)
-                .toList();
+        List<CartItemResponseDto> cartItems = cart.getCartItems() == null ? Collections.emptyList() :
+                cart.getCartItems().stream()
+                        .map(this::toCartItemResponseDto)
+                        .toList();
 
         return CartResponseDto.builder()
                 .cartId(cart.getId())
@@ -131,6 +135,10 @@ public class CartService {
     }
 
     private CartItemResponseDto toCartItemResponseDto(CartItem item) {
+        String imageUrl = null;
+        if (item.getProduct().getImages() != null && !item.getProduct().getImages().isEmpty()) {
+            imageUrl = item.getProduct().getImages().get(0).getImageUrl();
+        }
         return CartItemResponseDto.builder()
                 .id(item.getId())
                 .productId(item.getProduct().getId())
@@ -138,6 +146,7 @@ public class CartService {
                 .quantity(item.getQuantity())
                 .price(item.getPrice())
                 .totalPrice(item.getTotalPrice())
+                .productImageUrl(imageUrl)  // 여기만 바꿈
                 .build();
     }
 }

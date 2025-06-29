@@ -1,6 +1,7 @@
 package com.example.minishop.dto.review;
 
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 
@@ -15,6 +16,7 @@ public class ReviewResponseDto {
     private Long memberId;
     private int rating;
     private String comment;
+    private String imageUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

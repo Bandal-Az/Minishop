@@ -20,6 +20,10 @@ public class MemberDetails implements UserDetails {
         return member.getId();
     }
 
+    public Member getMember() {
+        return member;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // 예: ROLE_CLIENT, ROLE_ADMIN 형태로 권한 반환

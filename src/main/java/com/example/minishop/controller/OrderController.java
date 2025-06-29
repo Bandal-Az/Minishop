@@ -39,13 +39,13 @@ public class OrderController {
     }
 
 //  주문 생성
-    @PostMapping
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<OrderResponseDto> createOrder(@RequestBody OrderRequestDto dto) {
-        OrderResponseDto createdOrder = orderService.createOrder(dto);
-        return ResponseEntity.ok(createdOrder);
-    }
-
+@PostMapping
+@PreAuthorize("hasRole('USER')")
+public ResponseEntity<OrderResponseDto> createOrder(@RequestBody OrderRequestDto dto) {
+    System.out.println("주문 생성 요청: " + dto);  // 로그 추가
+    OrderResponseDto createdOrder = orderService.createOrder(dto);
+    return ResponseEntity.ok(createdOrder);
+}
 
 //  주문 수정
     @PutMapping("/{id}")
