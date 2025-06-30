@@ -8,7 +8,7 @@ import com.example.minishop.entity.Review;
 import com.example.minishop.repository.MemberRepository;
 import com.example.minishop.repository.ProductRepository;
 import com.example.minishop.repository.ReviewRepository;
-import com.example.minishop.util.FileService; // 파일 업로드 서비스
+import com.example.minishop.util.FileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,60 +21,77 @@ import java.util.stream.Collectors;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
-    private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
+    private final MemberRepository memberRepository;
     private final FileService fileService;
 
-    // 전체 리뷰 조회
-    public List<ReviewResponseDto> getAllReviews() {
-        return reviewRepository.findAll().stream()
-                .map(this::toResponseDto)
+    public ReviewResponseDto createReview(ReviewRequestDto requestDto) {
+        Product product = productRepository.findById(requestDto.getProductId())
+                .orElseThrow(() -> new IllegalArgumentException("상품이 존재하지 않습니다."));
+        Member member = memberRepository.findById(requestDto.getMemberId())
+                .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
+
+        String imageUrl = null;
+        MultipartFile imageFile = requestDto.getImageFile();
+        if (imageFile != null && !imageFile.isEmpty()) {
+            imageUrl = fileService.saveFile(imageFile);
+        }
+
+        Review review = Review.builder()
+                .product(product)
+                .member(member)
+                .rating(requestDto.getRating())
+                .comment(requestDto.getComment())
+                .imageUrl(imageUrl)
+                .isActive(true)
+                .build();
+
+        return toDto(reviewRepository.save(review));
+    }
+
+    public ReviewResponseDto updateReview(Long reviewId, ReviewRequestDto requestDto) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("리뷰가 존재하지 않습니다."));
+
+        if (!review.getMember().getId().equals(requestDto.getMemberId())) {
+            throw new IllegalArgumentException("본인의 리뷰만 수정할 수 있습니다.");
+        }
+
+        review.setRating(requestDto.getRating());
+        review.setComment(requestDto.getComment());
+
+        MultipartFile imageFile = requestDto.getImageFile();
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String imageUrl = fileService.saveFile(imageFile);
+            review.setImageUrl(imageUrl);
+        }
+
+        return toDto(reviewRepository.save(review));
+    }
+
+    public List<ReviewResponseDto> getReviewsByProductId(Long productId) {
+        return reviewRepository.findByProductIdAndIsActiveTrue(productId).stream()
+                .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
-    // 특정 리뷰 조회
+    public List<ReviewResponseDto> getReviewsByMemberId(Long memberId) {
+        return reviewRepository.findByMemberIdAndIsActiveTrue(memberId).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
     public ReviewResponseDto getReviewById(Long id) {
-        return reviewRepository.findById(id)
-                .map(this::toResponseDto)
-                .orElse(null);
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("후기를 찾을 수 없습니다."));
+        return toDto(review);
     }
 
-    // 리뷰 생성
-    public ReviewResponseDto createReview(ReviewRequestDto dto, MultipartFile file, Long memberId) {
-        // 로그인된 사용자의 정보 이용하여 memberId 설정
-        dto.setMemberId(memberId);
-
-        Review review = toEntity(dto, file);
-        Review saved = reviewRepository.save(review);
-
-        return toResponseDto(saved);
-    }
-
-    // 리뷰 수정
-    public ReviewResponseDto updateReview(Long id, ReviewRequestDto dto, MultipartFile file) {
-        return reviewRepository.findById(id)
-                .map(existing -> {
-                    existing.setRating(dto.getRating());
-                    existing.setComment(dto.getComment());
-
-                    // 파일이 존재하면 이미지 URL 업데이트
-                    if (file != null) {
-                        String imageUrl = fileService.saveFile(file); // 파일 저장 후 URL 받기
-                        existing.setImageUrl(imageUrl);
-                    }
-
-                    return toResponseDto(reviewRepository.save(existing));
-                })
-                .orElse(null);
-    }
-
-    // 리뷰 삭제
     public void deleteReview(Long id) {
         reviewRepository.deleteById(id);
     }
 
-    // ReviewResponseDto 변환
-    private ReviewResponseDto toResponseDto(Review review) {
+    private ReviewResponseDto toDto(Review review) {
         return ReviewResponseDto.builder()
                 .id(review.getId())
                 .productId(review.getProduct().getId())
@@ -84,40 +101,6 @@ public class ReviewService {
                 .imageUrl(review.getImageUrl())
                 .createdAt(review.getCreatedAt())
                 .updatedAt(review.getUpdatedAt())
-                .build();
-    }
-
-    // Review 엔티티 변환
-    private Review toEntity(ReviewRequestDto dto, MultipartFile file) {
-        // Check if memberId and productId are present
-        if (dto.getMemberId() == null || dto.getProductId() == null) {
-            throw new IllegalArgumentException("Member ID or Product ID cannot be null");
-        }
-
-        // Logging for debug purposes
-        System.out.println("Member ID: " + dto.getMemberId());
-        System.out.println("Product ID: " + dto.getProductId());
-
-        Member member = memberRepository.findById(dto.getMemberId())
-                .orElseThrow(() -> new RuntimeException("Member not found"));
-        Product product = productRepository.findById(dto.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found"));
-
-        // Logging to check if we retrieved member and product successfully
-        System.out.println("Retrieved Member: " + member);
-        System.out.println("Retrieved Product: " + product);
-
-        String imageUrl = null;
-        if (file != null) {
-            imageUrl = fileService.saveFile(file); // 파일 저장 후 URL 받기
-        }
-
-        return Review.builder()
-                .member(member)
-                .product(product)
-                .rating(dto.getRating())
-                .comment(dto.getComment())
-                .imageUrl(imageUrl) // 이미지 URL 포함
                 .build();
     }
 }

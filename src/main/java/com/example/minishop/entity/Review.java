@@ -32,6 +32,9 @@ public class Review extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String comment; // 후기 내용
 
+    @Column(nullable = false)
+    private Boolean isActive = true;
+
     @Column(name = "image_url")  // 새로 추가된 필드
     private String imageUrl; // 이미지 URL
 
