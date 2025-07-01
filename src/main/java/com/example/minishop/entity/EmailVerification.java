@@ -18,11 +18,10 @@ public class EmailVerification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false, unique = true)
-    private Member member;
+    @Column(nullable = false)
+    private String email;
 
-    @Column(nullable = false, length = 6)
+    @Column(nullable = false, length = 8)
     private String verificationCode;
 
     @Column(nullable = false)

@@ -56,5 +56,10 @@ public class ProductController {
         productService.fetchAndSaveProductsFromApi();
         return "Fakestoreapi 상품 저장 완료";
     }
+
+    @GetMapping("/category/{categoryId}")
+    public List<ProductResponseDto> getProductsByCategory(@PathVariable Long categoryId) {
+        return productService.getProductsByCategory(categoryId);
+    }
 }
 

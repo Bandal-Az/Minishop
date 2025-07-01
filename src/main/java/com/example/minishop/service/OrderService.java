@@ -12,6 +12,8 @@ import com.example.minishop.entity.Product;
 import com.example.minishop.repository.MemberRepository;
 import com.example.minishop.repository.OrderRepository;
 import com.example.minishop.repository.ProductRepository;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -126,9 +128,31 @@ public class OrderService {
                 .orElse(null);
     }
 
+    @Transactional // 트랜잭션 적용
+    public OrderResponseDto cancelOrder(Long orderId) {
+        // 1. 주문 ID로 주문을 찾습니다.
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found with ID: " + orderId));
+
+        // 2. 주문 상태 확인 (이미 배송 중이거나 완료된 주문은 취소할 수 없습니다.)
+        if (order.getStatus() == OrderStatus.SHIPPED || order.getStatus() == OrderStatus.DELIVERED || order.getStatus() == OrderStatus.CANCELLED) {
+            throw new IllegalStateException("Order cannot be cancelled in its current status: " + order.getStatus());
+        }
+
+        // 3. 주문 상태를 CANCELLED로 변경합니다.
+        order.setStatus(OrderStatus.CANCELLED);
+
+        // 4. 변경된 주문을 저장합니다.
+        Order cancelledOrder = orderRepository.save(order);
+
+        // 5. 응답 DTO로 변환하여 반환합니다.
+        return toResponseDto(cancelledOrder);
+    }
+
     public void deleteOrder(Long id) {
         orderRepository.deleteById(id);
     }
+
 
     // 주문 항목의 총 가격을 계산하는 로직을 별도 메서드로 분리
     private BigDecimal calculateItemTotalPrice(Product product, int quantity) {

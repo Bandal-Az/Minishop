@@ -2,10 +2,14 @@ package com.example.minishop.service;
 
 import com.example.minishop.dto.category.CategoryRequestDto;
 import com.example.minishop.dto.category.CategoryResponseDto;
+import com.example.minishop.dto.product.ProductResponseDto;
 import com.example.minishop.entity.Category;
+import com.example.minishop.entity.Product;
 import com.example.minishop.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -81,4 +85,5 @@ public class CategoryService {
                 .parent(parent)
                 .build();
     }
+
 }

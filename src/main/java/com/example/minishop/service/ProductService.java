@@ -103,6 +103,11 @@ public class ProductService {
                 .orElse(null);
     }
 
+    public List<ProductResponseDto> getProductsByCategory(Long categoryId) {
+        List<Product> products = productRepository.findByCategoryId(categoryId);
+        return products.stream().map(ProductResponseDto::from).toList();
+    }
+
     public void deleteProduct(Long id) {
         productRepository.deleteById(id);
     }

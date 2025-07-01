@@ -2,6 +2,7 @@ package com.example.minishop.controller;
 
 import com.example.minishop.dto.category.CategoryRequestDto;
 import com.example.minishop.dto.category.CategoryResponseDto;
+import com.example.minishop.dto.product.ProductResponseDto;
 import com.example.minishop.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -45,4 +46,5 @@ public class CategoryController {
     public void deleteCategory(@PathVariable Long id) {
         categoryService.deleteCategory(id);
     }
+
 }

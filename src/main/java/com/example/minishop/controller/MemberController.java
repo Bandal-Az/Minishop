@@ -35,7 +35,7 @@ public class MemberController {
     }
 
     // 회원 생성 (가입)
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity<MemberResponseDto> createMember(@RequestBody MemberRequestDto requestDto) {
         MemberResponseDto created = memberService.createMember(requestDto);
         return ResponseEntity.ok(created);
@@ -60,4 +60,15 @@ public class MemberController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/check-username")
+    public ResponseEntity<Boolean> isUsernameDuplicate(@RequestParam String username) {
+        boolean isDuplicate = memberService.isUsernameDuplicate(username);
+        return ResponseEntity.ok(isDuplicate);
+    }
+
+    @GetMapping("/check-nickname")
+    public ResponseEntity<Boolean> isNicknameDuplicate(@RequestParam String nickname) {
+        boolean isDuplicate = memberService.isNicknameDuplicate(nickname);
+        return ResponseEntity.ok(isDuplicate);
+    }
 }

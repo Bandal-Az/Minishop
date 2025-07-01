@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.example.minishop.entity.Member.Role.CLIENT;
+
 @Service
 @RequiredArgsConstructor
 public class MemberService {
@@ -107,6 +109,10 @@ public class MemberService {
         return memberRepository.existsByUsername(username);
     }
 
+    public boolean isNicknameDuplicate(String nickname) {
+        return memberRepository.existsByNickname(nickname);
+    }
+
     public boolean isValidPassword(String password) {
         if (password == null || password.length() < 8) return false;
 
@@ -144,7 +150,8 @@ public class MemberService {
                 .phoneNumber(dto.getPhoneNumber())
                 .address(dto.getAddress())
                 .isEmailVerified(false) // 기본 false로 초기화
-                .isActive(dto.getIsActive())
+                .isActive(true)
+                .role(CLIENT)
                 .build();
     }
 
